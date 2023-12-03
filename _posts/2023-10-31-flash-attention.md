@@ -7,18 +7,6 @@ keywords: blogging, writing
 published: true
 ---
 
-<!-- TODO: how to pseudocode? -->
-
-<!-- Make the voice consistent? Talking to the reader -- you/your vs us/ours v/s I/me? Maybe not switch back and forth too often</mark> 
-
-{% cite bishop2006pattern %} -->
-
-
-<!-- Let's try a footnote[^1] here.
-
-[^1]: This is the footnote. -->
-
-
 
 <!-- TODOs:
 
@@ -48,7 +36,6 @@ published: true
 
 
 Others
-- [x] sidenotes
 - [ ] Citations, gregory gunderson style -- how does he cite posts/things that are not papers?
 - - [ ]switch to linking to citations instead of hyperlinks?
 - [ ] Bio
@@ -156,7 +143,7 @@ time-taken-to-do-a-thing-on-a-computer = time-spent-on-data-movement + time-spen
 Time spent on data movement includes things like moving your input data from the main memory to the compute unit, saving/loading any intermediate results, and writing your final output back to the main memory.
 
 
-The data flow in a GPU i.e. the *memory hierarchy* looks something{%sidenote "mem" "See [this](https://docs.nvidia.com/deeplearning/performance/dl-performance-gpu-background/index.html#gpu-arch) for a little more background on GPU architecture and [this](https://developer.nvidia.com/blog/nvidia-ampere-architecture-in-depth/#:~:text=all%20the%20SMs.-,A100%20L2%20cache,larger%20than%20V100%20L2%20cache.) for the L2 Cache." %} like this-- 
+The data flow in a GPU i.e. the *memory hierarchy* looks something{% sidenote "mem" "See [this](https://docs.nvidia.com/deeplearning/performance/dl-performance-gpu-background/index.html#gpu-arch) for a little more background on GPU architecture and [this](https://developer.nvidia.com/blog/nvidia-ampere-architecture-in-depth/#:~:text=all%20the%20SMs.-,A100%20L2%20cache,larger%20than%20V100%20L2%20cache.) for the L2 Cache." %} like this-- 
 
 <center> HBM → L2 Cache → SRAM → Compute </center>
 
@@ -184,7 +171,7 @@ Let $B$ be the block size and $n_B = N / B$ be the number of blocks. For $i \in 
 
 <!-- TODO: do two versions of pseudocode, with and without the overflow correction. Put the latter in appendix since it will be a little messy -->
 
-Here we go{%sidenote "loop" "The order of inner and outer loops here is reversed from that of the algorithm in the [paper](https://arxiv.org/abs/2205.14135). What we have here is similar to [FlashAttention-2](https://arxiv.org/abs/2307.08691) and was originally implemented in the [Triton kernel](https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/flash_attn_triton_og.py). This lends itself to easy parallelization of the outer loop over the $Q_{B_i}$s." %} -- 
+Here we go{% sidenote "loop" "The order of inner and outer loops here is reversed from that of the algorithm in the [paper](https://arxiv.org/abs/2205.14135). What we have here is similar to [FlashAttention-2](https://arxiv.org/abs/2307.08691) and was originally implemented in the [Triton kernel](https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/flash_attn_triton_og.py). This lends itself to easy parallelization of the outer loop over the $Q_{B_i}$s." %} -- 
 
 ```python
 def flash_attn(Q, K, V, B):

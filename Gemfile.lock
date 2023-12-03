@@ -262,6 +262,7 @@ GEM
     sawyer (0.9.2)
       addressable (>= 2.3.5)
       faraday (>= 0.17.3, < 3)
+    sidenote (0.0.1)
     simpleidn (0.2.1)
       unf (~> 0.1.4)
     terminal-table (1.8.0)
@@ -288,13 +289,15 @@ DEPENDENCIES
   github-pages
   jekyll-feed
   jekyll-katex
+  jekyll-mentions (= 1.6.0)
   jekyll-scholar
   jekyll-sitemap
   minima (~> 2.5)
+  sidenote
   tzinfo (~> 1.2)
   tzinfo-data
   wdm (~> 0.1.1)
-  webrick (~> 1.8)
+  webrick
 
 BUNDLED WITH
-   2.4.21
+   2.4.22
