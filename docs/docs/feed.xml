@@ -1,4 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2023-12-03T00:38:26-08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">vatshank.github.io</title><subtitle>Minimal Jekyll blog styled to resemble the look and layout of Edward Tufte's books</subtitle><entry><title type="html">Flash-Attention</title><link href="http://localhost:4000/blog/2023/12/01/flash-attention/" rel="alternate" type="text/html" title="Flash-Attention" /><published>2023-12-01T00:00:00-08:00</published><updated>2023-12-01T00:00:00-08:00</updated><id>http://localhost:4000/blog/2023/12/01/flash-attention</id><content type="html" xml:base="http://localhost:4000/blog/2023/12/01/flash-attention/">&lt;!-- TODOs:
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.3">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2023-12-03T00:21:30-08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">vatshank.github.io</title><subtitle>Minimal Jekyll blog styled to resemble the look and layout of Edward Tufte's books</subtitle><entry><title type="html">Test</title><link href="http://localhost:4000/blog/2023/10/30/test/" rel="alternate" type="text/html" title="Test" /><published>2023-10-30T00:00:00-07:00</published><updated>2023-10-30T00:00:00-07:00</updated><id>http://localhost:4000/blog/2023/10/30/test</id><content type="html" xml:base="http://localhost:4000/blog/2023/10/30/test/">&lt;hr /&gt;
+&lt;p&gt;title: wewueh
+subtitle: asdjhsab
+layout: default
+date: 2023-10-30
+keywords: blogging, writing
+published: true
+–&lt;/p&gt;
+
+&lt;p&gt;Test test test&lt;/p&gt;</content><author><name></name></author><summary type="html">title: wewueh subtitle: asdjhsab layout: default date: 2023-10-30 keywords: blogging, writing published: true –</summary></entry><entry><title type="html">Flash-Attention</title><link href="http://localhost:4000/blog/2023/10/28/flash-attention/" rel="alternate" type="text/html" title="Flash-Attention" /><published>2023-10-28T00:00:00-07:00</published><updated>2023-10-28T00:00:00-07:00</updated><id>http://localhost:4000/blog/2023/10/28/flash-attention</id><content type="html" xml:base="http://localhost:4000/blog/2023/10/28/flash-attention/">&lt;!-- TODOs:
 
 - [x] HBM accesses calculation -- vanilla vs FA -- Theorem 2 -- M and it being theta(Nd)
 - [x] &lt;mark&gt; One figure vs Two? (One with outerloop parallelization and one without?). Leaning towards one without the outerloop parallelization. &lt;/mark&gt;

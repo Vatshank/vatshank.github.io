@@ -2,7 +2,7 @@
 title: Flash-Attention
 subtitle: An exact algorithm for faster and lower memory computation of self-attention.
 layout: default
-date: 2023-10-28
+date: 2023-12-01
 keywords: blogging, writing
 published: true
 ---
