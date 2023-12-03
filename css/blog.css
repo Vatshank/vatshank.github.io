@@ -1,5 +1,7 @@
+
+/* TODO: add variables for things like font lists that repeat */
 html {
-  font-family: -apple-system, Helvetica, arial, sans-serif;
+  font-family: 'Courier', -apple-system, Helvetica, arial, sans-serif;
   color: rgba(0, 0, 0, 0.8);
   line-height: 1.5em;
   -ms-text-size-adjust: 100%;
@@ -8,6 +10,9 @@ html {
 }
 body {
   margin: 0;
+  margin-left: -20%;
+  counter-reset: sidenote-counter;
+  
 }
 body .content {
   margin-bottom: 120px;
@@ -24,7 +29,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: -apple-system, Helvetica, arial, sans-serif;
+  font-family: 'Courier', -apple-system, Helvetica, arial, sans-serif;
 }
 h1 {
   line-height: 1.2em;
@@ -117,7 +122,7 @@ h1 {
   padding-top: 15px;
   display: inline-block;
   font-size: 13px;
-  line-heigh: 1.2em;
+  line-height: 1.2em;
 }
 .article .figure .caption-label {
   font-weight: bold;
@@ -211,3 +216,44 @@ hr {
     margin: 0 7px;
   }
 }
+
+/* .sidenote {
+  font-size: large;
+  font-weight: italic;
+  color: rgb(43, 51, 138);
+} */
+
+/* $contrast-color: #a00000; */
+
+.sidenote, .marginnote { float: right;
+  clear: right;
+  margin-right: -70%;
+  width: 50%;
+  margin-top: 0;
+  margin-bottom: 1.96rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  vertical-align: baseline;
+  position: relative; }
+
+
+li .sidenote, li .marginnote{ margin-right: -80%; }
+
+blockquote .sidenote, blockquote .marginnote { margin-right: -79% }
+
+.sidenote-number { counter-increment: sidenote-counter; }
+
+.sidenote-number:after, .sidenote:before { content: counter(sidenote-counter) " ";
+                    font-family: et-bembo-roman-old-style;
+                    color: #a00000;
+                    position: relative;
+                    vertical-align: baseline; }
+
+.sidenote-number:after { content: counter(sidenote-counter);
+  font-size: 1rem;
+  top: -0.5rem;
+  left: 0.1rem; }
+
+.sidenote:before { content: counter(sidenote-counter) ".\000a0";
+color: #a00000;
+top: 0rem; }

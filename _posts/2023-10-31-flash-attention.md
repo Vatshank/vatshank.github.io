@@ -1,47 +1,74 @@
 ---
-title: Flash Attention
-subtitle: Here is some extra detail about the post.
+title: Flash-Attention
+subtitle: An exact algorithm for faster and lower memory computation of self-attention.
 layout: default
 date: 2023-10-28
 keywords: blogging, writing
 published: true
 ---
 
-
 <!-- TODO: how to pseudocode? -->
 
-<mark> Make the voice consistent? Talking to the reader -- you/your vs us/ours v/s I/me? Maybe not switch back and forth too often</mark> 
+<!-- Make the voice consistent? Talking to the reader -- you/your vs us/ours v/s I/me? Maybe not switch back and forth too often</mark> 
+
+{% cite bishop2006pattern %} -->
 
 
-ToDos:
+<!-- Let's try a footnote[^1] here.
 
-- [ ] HBM accesses calculation -- vanilla vs FA -- Theorem 2 -- M and it being theta(Nd)
-- [ ] One figure vs Two? (One with outerloop parallelization and one without?). Leaning towards one without the outerloop parallelization.
-- [ ] Simplified pseudocode for the fwd pass? Leaning yes.
-- [ ] Bwd pass? Leaning no, but maybe point out the parallelization in the vertical dimension?
-- [ ] Why FA is not all that for inference?
-- [ ] FA2 and Flash decoding
+[^1]: This is the footnote. -->
+
+
+
+<!-- TODOs:
+
+- [x] HBM accesses calculation -- vanilla vs FA -- Theorem 2 -- M and it being theta(Nd)
+- [x] <mark> One figure vs Two? (One with outerloop parallelization and one without?). Leaning towards one without the outerloop parallelization. </mark>
+- [x] Simplified pseudocode for the fwd pass? Leaning yes.
 - [ ] Cleanup
-- [ ] Figure out how to add pseudocode properly
+- [ ] Check code
+- [ ] Check math
+- [x] Figure out how to add pseudocode properly (ignoring for now)
+
+- [x] big oh notation (see if newcommand works? just did manual mathcal replacement for now)
+- [x] Flash Attention to FlashAttention?
+- [ ] highlight link color? black underline is not obvious and also, open in new tab?
+- [x] table at the end
+- [ ] intro and subtitle -- see how greg does it
+- [x] conclusion
+- - [x] summary
+- - [x] Why FA is not all that for inference?
+- - [x] FA2 and Flash decoding
+- - [x] Bwd pass? Leaning no, but maybe point out the parallelization in the vertical dimension?
+
+- [ ] padding sequences vs not? (appendix?)
+- [x] gpu section memory hierarchy
+- [ ] note that FA will parallelize over batch sizes * n_heads? Also a (batch, heads) for the vanilla attn?
+- [ ] <mark> appendix softmax overflow correction pseudocode </mark> Skip it for now? Do after push to GH pages.
+
 
 Others
-- [ ] Footnotes, sidenotes, styling.
+- [x] sidenotes
+- [ ] Citations, gregory gunderson style -- how does he cite posts/things that are not papers?
+- - [ ]switch to linking to citations instead of hyperlinks?
 - [ ] Bio
 - [ ] Blog page intro -- taking notes etc
+- [ ] font - if using Courier, will have to play with the font size (increase? the latex stuff looks much bigger rn) and line height
+- [ ] code font - comic code?
+- [ ] <mark> get it working with GH pages -- domain name, gemfile changes jekyll pages bundle, change meta data from gregory to yours, keywords etc </mark>
+- [ ] quotes -- sean lock carrot, lbj 2 points isnt 2 points
+ -->
 
-
-<!-- TODO: footnotes. Margins? -->
 
 <!-- TODO: quotes at top -->
 
-Now that Flash-Attention-Dos <mark>(link)</mark> has been out for months, figure it’s time to at least make sense of the original one. Our goal is to understand the algorithm and map it to the FA triton kernel found here <mark>[are we doing this? let’s not for now?] (link)</mark> .
+
+Now that [FlashAttention-2](https://arxiv.org/abs/2307.08691) has been out for a few months and [Flash-Decoding](https://crfm.stanford.edu/2023/10/12/flashdecoding.html) is a thing, let's look at the original [FlashAttention](https://arxiv.org/abs/2205.14135) algorithm and understand ~~the thing that helps us build things we don't really understand, but like, a lot faster~~ how it efficiently computes self-attention.
 
 ## Background
-
 Let’s review the background material real quick.
 
 ### Self-Attention
-
 {% katexmm %}    
 
 Given matrices $Q, K, V \in {\R}^{N \times d}$ where $N$ is the sequence length and $d$ is the embedding dimension, self-attention calculates the output $O \in \R ^{N \times d}$ as 
@@ -50,42 +77,40 @@ $$ O = softmax (\frac {QK^T} {\sqrt{d}}) V \tag{1} $$
 
 where the $softmax$ is applied row-wise. 
 
-And there we go. That's really all the deep learning background we need for this <mark> point to the intro to transformers post (but if you are not sure what a transformer is or its been a while, go read this ) </mark>. 
+And there we go. That's really all the deep learning background we need to make sense of this.{% sidenote "1" "But, if you want to review self-attention or transformers, check out [this post](https://peterbloem.nl/blog/transformers)." %} 
 
 Let's assign variables to the intermediate steps so we can refer back to them later in the post -- $ S =  \frac {QK^T} {\sqrt{d}}$ and $P = softmax(S)$
-making our output $ O = PV $.
+making our output $O = PV$.
 
 
-In words, we are performing three operations -- a matrix multiplication, followed by a row-wise softmax, followed by another matrix multiplication. And in code, it looks like so --
+In words, we are performing three operations -- a matrix multiplication, followed by a row-wise softmax, followed by another matrix multiplication. In code{% sidenote "ein" "Using *einsum* here because it is *awesome*. If you are unfamiliar, [this](https://ajcr.net/Basic-guide-to-einsum/) should help. If you are familiar, but not quite comfortable with it yet, I highly recommend working through the code-snippets in this [excellent paper](https://arxiv.org/abs/1911.02150) that introduced Multi-Query-Attention." %}, it looks like so --
+
+
 ```python
 import torch
 
-# Initalize Q, K, V
+# Initialize Q, K, V
 N, d = 256, 16
 Q, K, V = torch.randn(3, N, d).unbind(0)
 
-# Attention
-S = torch.einsum('nd,nd->nn', Q, K) / torch.sqrt(torch.tensor(d)) # Scores
-P = torch.softmax(scores, dim=1) # Probabilities
-O = torch.einsum('nm,nd->nd', probs, V) # Output
+# Self-Attention
+S = torch.einsum('nd,md->nm', Q, K) / torch.sqrt(torch.tensor(d)) # Scores
+P = torch.softmax(S, dim=1) # Probabilities
+O = torch.einsum('nn,nd->nd', P, V) # Output
 ```
 
-<mark> make a foot note for batch size and multiple heads (add code with it too), if einsum looks alien to you go read this, if einsum looks somewhat familiar but you are not friendly with it, highly recommend reading this paper on MQA and replicating their code snippets line by line. Point to Naom's MQA paper </mark> -- 
+Calculating $O$ this way involves -- 
+- $\mathcal{O}(N^2d)$ FLOPs -- the $QK^T$ and $PV$ matrix multiplications are $\mathcal{O}(N^2d)$ operations each, and the softmax takes $\mathcal{O}(N^2)$ operations.
+- $\mathcal{O}(N^2)$ memory in addition to the inputs/output  -- this is because the intermediate matrices $S, P \in \R^{N \times N}$ take up $\mathcal{O}(N^2)$ storage.
 
-As you can see the calculation is O(N^2) in time and space [write out the exact time and space complexity as a function of N and D].
-<!-- And as we all know, O(N^2) bad and O(N) good.  -->
-This limits the max sequence length you can put through your model, which is not ideal when you are trying to model long range dependencies in your data [rewrite]. [would be nice to show what max sequence length you can put it in through for N^2 vs N for like a 10B model, 32 heads, 24 layers etc. Too annoying to calculate?].
 
+This $N^2$ dependence limits the maximum sequence length we can put through our model. We will soon see that FlashAttention will reduce this memory burden to $\mathcal{O}(N)$ AND be much faster despite continuing to perform $\mathcal{O}(N^2d)$ operations{% sidenote "exact" "There really isn't a way around performing $\mathcal{O}(N^2d)$ operations for \"exact\" attention. There are other techniques, however, that approximate attention and reduce the number of operations at some expense to model quality. See [Performer](https://arxiv.org/abs/2009.14794) and [Linear Attention](https://arxiv.org/abs/2006.16236) for two such examples."%} by reducing the number of slow accesses to the GPU main memory. But, first, a little detour.
 
 {% endkatexmm %}
 
+---
 
 ### (Online) Softmax
-    
-<mark> 1) convince yourself the diff between the online softmax vs online softmax * V product </mark>
-
-<mark> 2) start with the vanilla online softmax or directly go to softmax * V product? Leaning towards softmax * V </mark>
-
 {% katexmm %}
 
 Given an input vector $x \in \R^N $, softmax calculates the output $y \in \R^N$ as 
@@ -93,9 +118,7 @@ Given an input vector $x \in \R^N $, softmax calculates the output $y \in \R^N$ 
 $$ y_i = \frac {e^{x_i}} {\sum_{j=1}^N e^{x_j}} \tag{2} $$
 
 
-Let's solve a little problem (<mark> kind of like a 1-d version of Equation 1 </mark>). Given an input vector $s \in \R^N$, calculate $y = p^T v \in \R$ where $p = softmax(s)$. That's easy enough -- calculate $p$ first using Equation $2$ and then calculate the dot product $p^T v$. Now let's add a small constraint -- what if we are given the elements of $s$ one at a time? We could do something like this for $i = 1, 2, ... , N$ -- 
-
-<mark> change to pseudo code? </mark>
+Let's work through a small problem. Given input vectors $s, v \in \R^N$, calculate $y = p^T v \in \R$ where $p = softmax(s)$. That's easy enough -- first calculate $p$ using Equation $2$ and then calculate the dot product $p^T v$. Now let's add a small constraint -- what if we were given the elements of $s$ one at a time? We could execute the following routine for $i = 1, 2, ... , N$ iterations -- 
 
 $$ c^{(i)} = c^{(i - 1)} + e^{s_i} $$
 
@@ -103,121 +126,81 @@ $$ y^{(i)} = \frac {y^{(i - 1)} \times c^{(i - 1)} + v_i \times e^{s_i} } {c^{(i
 where $c^{(0)} = 0$ and $y^{(0)} = 0$.
 
 
-Note that we got the output $y$ without ever materializing the entire softmax'd vector $p$ and only accessing $s$ one element at a time. You might have noticed the resemblance of our toy problem with Equation $1$. To make it more apparent, we could replace $v \in \R^N$ with $V \in \R ^ {N \times d}$ and that doesn't change our update scheme at all -- we will then just apply the update to $d$ entries of the row $V_i$ at a time. <mark> rewrite pseudo code with V instead of v </mark>
+Note that we got the output $y = y^{(N)}$ without ever fully materializing the softmax-ed vector $p$ and by only accessing $s$ one element at a time. You might have noticed the resemblance of our toy problem with Equation $1$. To make it more apparent, we could replace $v \in \R^N$ with $V \in \R ^ {N \times d}$ and observe that our update scheme doesn't change much at all -- we just have to apply the update to $d$ entries of the row $V_i$ at a time. This "online" softmax calculation is the bit that lets FlashAttention bring the memory usage down to $\mathcal{O}(N)$ from $\mathcal{O}(N^2)$ because we will never materialize all of $S$ or $P$ in memory and instead work only with "blocks" of those matrices. But more on that later.
 
+In practice, however, instead of Equation $2$, softmax is calculated like this -- 
 
-In practice, softmax is implemented more like this -- <mark> add eqn scaling by max </max> because you wouldn't want your softmax to cause overflow now, would you? <mark> link to Jak Moody's post </mark>
+$$ y_i = \frac {e^{x_i - max(x)}} {\sum_{j=1}^N e^{x_j - max(x)}} \tag{3} $$
 
-<mark>highlight this important point: </mark>And we care about this because it lets us calculate the output of the attention operation without keeping all the scores (that take up a lot of memory - quantify in O notation?) around just to calculate the $softmax(s)$.
-
---- 
+This is because you wouldn't want your [softmax to overflow](https://jaykmody.com/blog/stable-softmax/) now, would you?
 
 {% endkatexmm %}
-
-
-
-- Code
-
-    - yes? No? No.
-
----
+--- 
 
 ### GPU Stuff
-<mark> fact check things below </mark>
-
 Kind of obvious when it’s spelled out but something I learnt way later than I am willing to admit is --
-<mark> do in excalidraw? <mark>
+<!-- TODO:  do in excalidraw?  -->
+
+<!-- <center>
+time-taken-to-do-a-thing-on-a-computer = time-spent-on-data-movement + time-spent-on-actual-compute
+</center> -->
+
+
 ```
 time-taken-to-do-a-thing-on-a-computer = time-spent-on-data-movement + time-spent-on-actual-compute
 ```
 
-Time spent on data movement would include things like moving your input data from the main memory to the compute unit, saving/loading any intermediate results, and writing your final output back to the main memory.
-
-
-
-The data flow in a GPU i.e. the *memory hierarchy* looks something like this --  
-(<mark> 
-caveat that this is simplified
-link to Simone's memory diagram and mention his excellent blog/post 
-or link here https://docs.nvidia.com/deeplearning/performance/dl-performance-gpu-background/index.html#gpu-arch ?
-</mark>
-) 
-
-<mark> do below in excalidraw? <mark>
-
-<center> HBM → L2 Cache → SRAM → Compute </center>
-
-<!-- DRAM → L2 Cache → L1/SRAM → Registers  -->
-<!-- (<mark> remove the L2 cache above? </mark>) -->
-
-HBM (High Bandwidth Memory) is the big but slow memory for your GPU. When you use an A100 NVIDIA GPU with a 40 GB memory, that 40GB is your HBM. SRAM is the "on-chip" memory, there is one of these per Streaming Multiprocessor (meaning the compute engines, shortened to SM, with the A100 having 108 SMs) and is much faster but much smaller. (For A100) The GPU HBM has a capacity of 40GB and a memory bandwidth of 1.5TB/s whereas the SRAM has a total capacity of 20MB (192 KB per SM) and a bandwidth of 19TB/s.
-
-
-<mark> add the l2 numbers from below. Add as a ref in the post for this section? </mark>
-
-[here](https://developer.nvidia.com/blog/nvidia-ampere-architecture-in-depth/#:~:text=all%20the%20SMs.-,A100%20L2%20cache,larger%20than%20V100%20L2%20cache.) 
-
-<!-- - Two facts for us to remember — things to the right get progressively smaller in capacity but faster in access time. Maybe add this line in if we decide to keep the L2 and REgisters in the flow?  -->
-
-
-All of this is to say -- we should try coding things in a way that lets us reduce any unnecessary reads/writes from/to the HBM and reuse the data loaded in SRAM. 
-
-<!-- Therefore, it’s better for us to reuse the loaded data towards the right (SRAM/SMEM?) and therefore reducing unnecessary accesses to the things on the left (HBM) .
-- DRAM, SRAM — moving data from DRAM to SRAM is slow (add numbers dram → sram vs sram → compute/register/processor?) -->
-
-
 <!-- - Computation and memory are not independent. Compute is preceded by moving inputs from memory to perform the compute and followed by moving results out to HBM. -->
 
 
+Time spent on data movement includes things like moving your input data from the main memory to the compute unit, saving/loading any intermediate results, and writing your final output back to the main memory.
 
-## Flash Attention 
+
+The data flow in a GPU i.e. the *memory hierarchy* looks something{%sidenote "mem" "See [this](https://docs.nvidia.com/deeplearning/performance/dl-performance-gpu-background/index.html#gpu-arch) for a little more background on GPU architecture and [this](https://developer.nvidia.com/blog/nvidia-ampere-architecture-in-depth/#:~:text=all%20the%20SMs.-,A100%20L2%20cache,larger%20than%20V100%20L2%20cache.) for the L2 Cache." %} like this-- 
+
+<center> HBM → L2 Cache → SRAM → Compute </center>
+
+HBM (High Bandwidth Memory) refers to the big but slow memory in your GPU. When you use an A100 NVIDIA GPU with a 40 GB memory, that 40GB is the HBM. SRAM is the much faster but much smaller "on-chip" memory, and there is one of these for every Streaming Multiprocessor (SM). SMs are the compute engines of the GPU with the A100 housing 108 SMs. The A100 HBM has a capacity of 40GB with a memory bandwidth of 1.5TB/s whereas the SRAM has a total capacity of 20MB (192 KB per SM) with a bandwidth of 19TB/s.
+
+
+All of this is to say -- we should try coding things in a way that lets us reduce any unnecessary reads/writes from/to the HBM and reuse the data in SRAM whenever we can. 
+
+## Flash-Attention 
 
 {% katexmm %}    
 
 Alright. So. Finally.
 
-<!-- TODO: figure out the actual memory complexity of FA -->
-<mark> lol where did "FA runs in O(N) memory" come from? Read it someplace (in the paper or presentation) or did we just straight up hallucinate it? </mark>
-<mark> Looks like it is in the paper after all "and uses less memory—linear in sequence length—than standard attention" . Is it because of the values of $M$? They verify this experimentally?</mark>
+Flash Attention calculates Equation $1$ in $\mathcal{O}(N)$ memory, down from the $\mathcal{O}(N^2)$ memory requirement of the standard implementation. And while there is no getting around performing $\mathcal{O}(N^2d)$ computations for exact attention, it is still up to 3x faster thanks to the reduced number of slow HBM accesses. 
 
-Flash Attention lets us calculate Equation $1$ in $O(N)$ memory (<mark> umm this is actually $O(N^2d^2 / M)?$ </mark>), down from the $O(N^2)$ (<mark> O(N^2d) actually? </mark>)> memory requirement of the naive implementation. And while there is no getting around performing $O(N^2)$ computations for exact attention, it is still (<mark> how much </mark>) faster thanks to the reduced number of slow HBM accesses. 
+Here is the core idea -- see how that output $O$ is $\R^{N \times d}$ but the intermediate scores ($S$) and attention matrices ($P$) are $\R ^ {N \times N}$? Well, we could use the online softmax update above to calculate the output $O$ without ever fully materializing the attention matrix $P$ in the HBM. We will load the input matrices $Q, K, V$ in chunks to the SRAM, calculate only the required blocks of the score matrix $S$ and manipulate them with the online softmax update (still in SRAM) until a final chunk of the output $O$ is ready to be written out to the HBM.
 
-Here is the core idea -- see how that output $O$ is $\R^{N \times d}$ but the intermediate score/attention matrices $S$, $P$ <mark> define P, S </mark> are $\R ^ {N \times N}$? Well, we could calculate the output $O$ without ever fully materializing the attention matrix $P$ in the HBM using the online softmax update (<mark> which is what we did for our code snippet above </mark>). We will load in the input matrices $Q, K, V$ in chunks to the SRAM, calculate only the required blocks of the score matrix $S$ and manipulate them with the online softmax update (still in SRAM) until a final chunk of the output $O$ is ready to be written out to the HBM.
-
-
-<mark> FWD pass pseudo code </mark>
-Let's make this concrete and look at the pseudo code for the forward pass (<mark> footnote here that we are reversing the inner and outerloop from the original paper, similar to FA2 and Triton </mark>) --
-
-
-We will make a couple of simplifications -- assume similar row and column block sizes and we will ignore the softmax overflow correction for now (while it is necessary to do the correction in practice, it does make the pseudocode much harder to read. I have shoved the version with the overflow correction in the appendix). 
+Let's make a couple of simplifications before we look at the python-esque pseudo code for the forward pass -- we will assume similar row and column block sizes, and also ignore the softmax overflow correction for now.{% sidenote "overflow" "While it is absolutely necessary to do the correction in practice, it does make the pseudocode a tad bit annoying thanks to the additional bookkeeping needed for the max value correction. <mark>I have shoved the version with the overflow correction in the appendix for the more tranquil-minded.</mark>" %}
 
 <!-- TODO: too many "Let's" to start the sentence? -->
 
 Let $B$ be the block size and $n_B = N / B$ be the number of blocks. For $i \in \{1, 2, ... n_B\}$, we will use $B_i$ to denote the $i$-th block, for example, $Q_{B_i}$ would be the $B \times d$ matrix with contiguous rows $Q_{iB}$ ... $Q_{(i + 1)B - 1}$.
-
-
+*flash_attn* is the function that is responsible for calculating the output $O$ given input matrices $Q$, $K$, $V$ and block-size $B$. It breaks down the problem by partitioning $Q$ into blocks of $Q_{B_i}$s such that the output $O_{B_{i}}$ corresponding to a $Q_{B_{i}}$ is calculated by *flash_attn_inner*.
 
 <!-- TODO: do two versions of pseudocode, with and without the overflow correction. Put the latter in appendix since it will be a little messy -->
 
-
-<mark> writes as a flash_attn and flash_attn_inner function that does the calculation for Q_i, O_i (just like in the new triton implementation) </mark>
+Here we go{%sidenote "loop" "The order of inner and outer loops here is reversed from that of the algorithm in the [paper](https://arxiv.org/abs/2205.14135). What we have here is similar to [FlashAttention-2](https://arxiv.org/abs/2307.08691) and was originally implemented in the [Triton kernel](https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/flash_attn_triton_og.py). This lends itself to easy parallelization of the outer loop over the $Q_{B_i}$s." %} -- 
 
 ```python
 def flash_attn(Q, K, V, B):
     N, d = Q.shape
     n_B = N / B
     O = zeros(N, d)
-    # NOTE: this loop can be parallelized
+    # NOTE: This loop can be parallelized
     for i in range(n_B):
         Bi = indices(i * B, (i + 1) * B)
-        running_sum = zeros(B)
         Q_Bi = load(Q, Bi)
         O_Bi = flash_attn_inner(Q_Bi, K, V, B, d, n_B)
-        store(O_Bi, O, Bi) # Store O_Bi in O on the rows Bi TODO: copy the triton syntax here
+        store(O_Bi, O)
     return O
 
 def flash_attn_inner(Q_Bi, K, V, B, d, n_B):
-    O_Bi = zeros(B, d)
+    O_Bi, running_sum = zeros(B, d), zeros(B)
     for j in range(n_B):
         Bj = indices(j * B, (j + 1) * B)
         K_Bj, V_Bj = load(K, Bj), load(V, Bj)
@@ -226,35 +209,7 @@ def flash_attn_inner(Q_Bi, K, V, B, d, n_B):
     return O_Bi
 
 # NOTE: This is without overflow correction
-def online_softmax(O_Bi, S_ij, P_ij, running_max, running_exp_sum):
-    new_running_sum = running_sum + S_ij.exp().sum(dim=1)
-    O_Bi = O_Bi * running_sum + S_ij.exp() @ V_j 
-    O_Bi = O_Bi / new_running_sum
-    return O_Bi, new_running_sum
-```
-
-
-```python
-def flash_attn(Q, K, V, B):
-    N, d = Q.shape
-    n_B = N / B
-    O = zeros(N, d)
-    for i in range(n_B): # NOTE: this loop can be parallelized
-        Bi = indices(i * B, (i + 1) * B)
-        running_sum = zeros(B)
-        Q_Bi, O_Bi = load(Q, Bi), load(O, Bi)
-        for j in range(n_B):
-            K_Bj, V_Bj = load(K, Bj), load(V, Bj)
-            S_ij = Q_Bi @ transpose(K_Bj)
-            O_Bi, running_sum = online_softmax(O_Bi, S_ij, V_j, running_sum)
-        store(O_Bi)
-        
-    return O
-
-
-
-# Without overflow correction
-def online_softmax(O_Bi, S_ij, P_ij, running_max, running_exp_sum):
+def online_softmax(O_Bi, S_ij, running_sum):
     new_running_sum = running_sum + S_ij.exp().sum(dim=1)
     O_Bi = O_Bi * running_sum + S_ij.exp() @ V_j 
     O_Bi = O_Bi / new_running_sum
@@ -262,7 +217,63 @@ def online_softmax(O_Bi, S_ij, P_ij, running_max, running_exp_sum):
 
 ```
 
-<mark> shove in the appendix </mark>
+Attentive{% sidenote "zinger" "Sorry, gotta get the bad jokes out while I still can. This first blog post has been six years in waiting, there might not be another one." %} readers would have noted that the output row $O_i$ depends on $Q$ only through $Q_i$. So we can calculate $O_{B_i}$ just by looking at the corresponding chunk of $Q_{B_i}$ and thus the outer loop over the $Q_{B_i}$s can be parallelized. 
+
+Figure $1$ is a visual illustration of what the *flash_attn_inner* function is doing. Following the notation in the paper, $L$ and $M$ are used to represent the online statistics for the softmax calculation. $L$ is similar to *running_sum*, while $M$ keeps track of the max values for overflow correction (which we have omitted in our pseudocode). 
+
+<div class='figure'>
+    <img src="/assets/fa.gif"
+         style="width: 80%; display: block; margin: 0 auto;"/>
+    <div class='caption'>
+        <span class='caption-label'>Figure 1.</span> The dashed blocks represent the "active" blocks of the different matrices in each iteration of the for-loop in flash_attn_inner.
+    </div>
+</div>
+
+
+Let's count the number of times we access the HBM to convince ourselves that these shenanigans are, in fact, helpful --
+
+- *Good ol' Attention* -- Loading in $Q$, $K$, $V$ takes $\mathcal{O}(Nd)$ reads, reading/writing $S$ and $P$ takes $\mathcal{O}(N^2)$ accesses, and writing out $O$ is another $\mathcal{O}(Nd)$ accesses. In total, that's $\mathcal{O}(Nd + N^2)$ HBM accesses.
+
+- *FlashAttention* --  The total number of HBM accesses is $n_B$ times the number of HBM accesses per call to *flash_attn_inner*. Each *flash_attn_inner* call takes $\mathcal{O}(Nd)$ reads for loading $K$ and $V$. Reading $Q_{B_i}$ and writing $O_{B_i}$ mean additional $\mathcal{O}(NB)$ accesses. That adds up to $\mathcal{O}(Nd)$ per call. Assuming SRAM size of $M$, we want to choose a big enough block-size $B$ such that $M = Bd$ and $n_B = N / B = Nd/M$. This gives us a grand total of $\mathcal{O}(N^2d^2/M)$ HBM accesses.
+
+Typically, $d \approx 100$ and $M \approx 100kB$ making $d^2 < M$, and thus FlashAttention has fewer HBM accesses than vanilla self-attention, which makes it faster. Also, the memory requirement is reduced to $\mathcal{O}(N)$ because all we need to save to the HBM are the statistics (*running_sum* above) required to calculate the online softmax (in addition to our inputs and output, of course), whereas vanilla self-attention would have us store the entire $\R^{N \times N}$ attention matrix.
+
+<br />
+
+In summary, FlashAttention is an exact algorithm for efficient computation of self-attention that improves on the standard self-attention implementation in the following ways --  
+
+|       | Standard Attention |  | Flash-Attention |    
+| :---  | :---:   | :---: | :---:
+| FLOPs  | $\mathcal{O}(N^2d)$  |  |$\mathcal{O}(N^2d)$ |
+| Memory| $\mathcal{O}(N^2)$ |  |$\mathcal{O}(N)$ |
+| HBM accesses|  $\mathcal{O}(Nd + N^2)$ |  | $\mathcal{O}(N^2d^2/M)$
+
+---
+
+Now, a quick note on things that are important but didn't get the real estate they deserve -- 
+
+**FlashAttention backward pass** has an analysis similar to the forward pass -- takes $\mathcal{O}(N)$ extra memory and $\mathcal{O}(N^2d^2/M)$ HBM accesses. The $S$ and $P$ matrices aren't stored for the backward pass so as to not blow up the memory and are instead recomputed from $O$ and the softmax statistics. The $O(N^2)$ dropout mask is not stored either and recomputed from the pseudo-random generator state stored from the forward pass.
+
+**FlashAttention-2** [[paper](https://arxiv.org/abs/2307.08691)] further optimizes the original FlashAttention algorithm by -- 
+- reducing non-matmul FLOPs. This is important because GPUs have much lower throughput (~10x) for non-matmul FLOPs than matmul FLOPs.
+- parallelizing across the sequence dimension (we actually covered this with the reversed loop order thingy above).
+- better work partitioning that reduces the need for synchronization and shared memory read/writes.{% sidenote "fa2" "Yeah, this bit is complicated. I don't fully understand it yet. Might make for an interesting post when I do."%}
+
+**Flash-Decoding** [[official post](https://crfm.stanford.edu/2023/10/12/flashdecoding.html)] is a specialization of the FlashAttention algorithm to auto-regressive inference, where the query sequence length is 1. We were parallelizing the outer loop across blocks $Q_{B_i}$s, but, for inference, since we will only have a single row in $Q$, we will end up under-utilizing the GPU. FlashDecoding solves this issue by dividing up the work along the longer key/value sequence dimensions and following it up with a reduce operation to get the final output.
+
+**Non-trivial implementation**. 
+Here is the deal, none of this works unless implemented carefully. Multiple operations need to be fused together to avoid unnecessary kernel launch overheads and reads/writes to HBM. As clean and intuitive as the algorithm itself is, I imagine, writing all that CUDA code to actually get the speedups that the authors did, must have been a lot of work. Impressive really, and we have side stepped all those gory details here. The [triton kernels](https://github.com/openai/triton/blob/main/python/tutorials/06-fused-attention.py) do offer an approachable way to get your hands dirty with the core FlashAttention algorithm than the [CUDA/CUTLASS/C implementation](https://github.com/Dao-AILab/flash-attention/), but, you will lose some of the finer grained control required to implement things like the work partitioning optimization in FlashAttention-2.
+
+<br />
+
+Fin.
+
+---
+
+## Appendix
+
+
+<!-- 
 ```python
 # With overflow correction
 
@@ -276,35 +287,7 @@ def online_softmax(O_Bi, S_ij, P_ij, running_max, running_exp_sum):
     O_Bi = O_Bi / new_running_sum
     return O_Bi, new_running_max, new_running_sum
 
-
 ```
-
-Let's count <mark> the number of HBM accesses?  </mark> to convince ourselves that these shenanigans do in fact reduce memory accesses to the HBM -- <mark>calculation from Theorem 2 and refer to it in a footnote </mark>
-1. Good ol' Attention -- Loading in $Q$, $K$, $V$ is $O(Nd)$, reading/writing $S$ and $P$ is $O (N^2) $, and writing out $O$ is $O(Nd)$. In total, that's $O (Nd + N^2)$.
-
-2. Flash Attention --  Loading in Q, K, V ( $O(Nd)$ ), Writing out O ($O(Nd)$). In total, that's $O (Nd)$
-
-Let's look at this gif that took way too much time to make -- 
-
-<!-- ![Flash Attention](/assets/anim.gif) -->
-
-<img src="/assets/anim.gif" width="500px" height="500px" style="object-fit: contain" />
-
-Attentive (<mark> hehe ^footnote </mark>) readers would have noted that the row $O_i$ depends on $Q$ only through $Q_i$. So you can calculate a chunk of $O$ just by looking at the corresponding chunk of $Q$. (<mark> use this to explain the triton 2d parallelism after explaining the actual core idea (below?) of algorithm? </mark>)
-
-<!-- Would be nice if we could do O(N). Enter Flash Attention — it is an exact attention (side note about approximate attn) will give you O(N) in memory, O(N^2) in time (but actually much faster!) Let’s see how. -->
-
-*(Hmm is O(N) talking about SRAM usage or number of reads/writes? — the device memory is still the same, no?)*
-
-- *I guess FA doesnt ever fully materialize the full N^2 attention matrix and directly calculate the output matrix (which is NxD), which is why FA is O(N) memory?*
-- *And it is faster (despite still being O(N^2) for time plus doing additional recomputations (activations?) ) because of the much fewer reads and writes to DRAM? How many reads and writes did we have before? They have that in the theorems? ( — Yes, let’s read theorem 2 and proof)*
-
-[online softmax — write a simplified 1d example] (<mark> put this in the background section? </mark>)
-
-Need the [numerical correction here](https://jaykmody.com/blog/stable-softmax/).
-
-
-<mark> add a simplified pseudo code for the fwd pass? </mark>
 
 **FWD pass**
 
@@ -314,10 +297,6 @@ Theorem 2 — HBM accesses
     - (step 1) What is the number of HBM accesses for matmul of two Nxd matrices? How are they getting theta(Nd + N^2)? How is M not showing up in this? Why is d in there?
         - This calculation seems more like data read/written as opposed to number of HBM accesses, no?
     - (step 2)
-
-[Figure showing the block by block computation.]
-
-[]()
 
 [show relevant code snippets?]
 
@@ -333,6 +312,6 @@ Recap
 
 - Lowers memory usage by not materializing the full attention matrix and calculating it in blocks.
 - Runs faster, not by reducing computations (actually does more compute) by reducing the reads/writes from/to HBM
-- Helps training but not inference (yeah?)
+- Helps training but not inference (yeah?) -->
 
 {% endkatexmm %}
