@@ -2,6 +2,7 @@
 /* TODO: add variables for things like font lists that repeat */
 html {
   font-family: 'Courier', -apple-system, Helvetica, arial, sans-serif;
+  /* font-family: Helvetica; */
   color: rgba(0, 0, 0, 0.8);
   line-height: 1.5em;
   -ms-text-size-adjust: 100%;
@@ -10,7 +11,8 @@ html {
 }
 body {
   margin: 0;
-  margin-left: -20%;
+  margin-left: -30%;
+  /* margin-right: -30%; */
   counter-reset: sidenote-counter;
   
 }
@@ -74,7 +76,7 @@ h1 {
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 .front-matter h4 {
-  font-family: -apple-system, Helvetica, arial, sans-serif;
+  font-family: 'Courier', -apple-system, Helvetica, arial, sans-serif;
 }
 .front-matter .bylines .byline {
   margin-right: 20px;
@@ -83,7 +85,7 @@ h1 {
 .front-matter .bylines .byline h3,
 .front-matter .bylines .byline p {
   margin: 0;
-  font-family: -apple-system, Helvetica, arial, sans-serif;
+  font-family: 'Courier', -apple-system, Helvetica, arial, sans-serif;
 }
 .front-matter .bylines .byline h3 {
   font-size: 9px;
@@ -95,7 +97,7 @@ h1 {
   line-height: 1.6em;
 }
 .article {
-  font-size: 15px;
+  font-size: 15px; /* TODO: increase font size */
   line-height: 1.6em;
   color: rgba(0, 0, 0, 0.8);
   margin-top: 50px;
