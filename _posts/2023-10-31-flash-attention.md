@@ -64,13 +64,13 @@ $$ O = softmax (\frac {QK^T} {\sqrt{d}}) V \tag{1} $$
 
 where the $softmax$ is applied row-wise. 
 
-And there we go. That's really all the deep learning background we need to make sense of this.{% sidenote "1" "But, if you want to review self-attention or transformers, check out [this post](https://peterbloem.nl/blog/transformers){:target="_blank"}." %} 
+And there we go. That's really all the deep learning background we need to make sense of this.{% sidenote "1" "But if you want to review self-attention or transformers, check out [this post](https://peterbloem.nl/blog/transformers){:target="_blank"}." %} 
 
 Let's assign variables to the intermediate steps so we can refer back to them later in the post -- $ S =  \frac {QK^T} {\sqrt{d}}$ and $P = softmax(S)$
 making our output $O = PV$.
 
 
-In words, we are performing three operations -- a matrix multiplication, followed by a row-wise softmax, followed by another matrix multiplication. In code{% sidenote "ein" "Using *einsum* here because it is *awesome*. If you are unfamiliar, [this](https://ajcr.net/Basic-guide-to-einsum/){:target="_blank"} should help. If you are familiar, but not quite comfortable with it yet, I highly recommend working through the code-snippets in this [excellent paper](https://arxiv.org/abs/1911.02150){:target="_blank"} that introduced Multi-Query-Attention." %}, it looks like so --
+In words, we are performing three operations -- a matrix multiplication, followed by a row-wise softmax, followed by another matrix multiplication. In code{% sidenote "ein" "Using *einsum* here because it is *awesome*. If you are unfamiliar, [this](https://ajcr.net/Basic-guide-to-einsum/){:target="_blank"} should help. If you are familiar but not quite comfortable with it yet, I highly recommend working through the code-snippets in this [excellent paper](https://arxiv.org/abs/1911.02150){:target="_blank"} that introduced Multi-Query-Attention." %}, it looks like so --
 
 
 ```python
@@ -105,21 +105,22 @@ Given an input vector $x \in \R^N $, softmax calculates the output $y \in \R^N$ 
 $$ y_i = \frac {e^{x_i}} {\sum_{j=1}^N e^{x_j}} \tag{2} $$
 
 
-Let's work through a small problem. Given input vectors $s, v \in \R^N$, calculate $y = p^T v \in \R$ where $p = softmax(s)$. That's easy enough -- first calculate $p$ using Equation $2$ and then calculate the dot product $p^T v$. Now let's add a small constraint -- what if we were given the elements of $s$ one at a time? We could execute the following routine for $i = 1, 2, ... , N$ iterations -- 
+Let's work through a small problem. Given input vectors $s, v \in \R^N$, calculate $y = p^T v \in \R$ where $p = softmax(s)$. That's easy enough -- first calculate $p$ using Equation $2$ and then calculate the dot product $p^T v$. Now let's add a small constraint -- what if we were given the elements of $s$ one at a time? Since we are seeing these elements one-by-one, we can keep a running sum to calculate the softmax denominator as we loop over our vectors and appropriately scale the previous "estimates" of $y$. Concretely, we can run the following routine for $i = 1, 2, ... , N$ iterations -- 
 
 $$ c^{(i)} = c^{(i - 1)} + e^{s_i} $$
 
 $$ y^{(i)} = \frac {c^{(i - 1)} \cdot y^{(i - 1)} + e^{s_i} \cdot v_i} {c^{(i)}} $$
 where $c^{(0)} = 0$ and $y^{(0)} = 0$.
 
+The $c^{(i)}$ is the running sum of the softmax denominator, and in each iteration, we use the previous running sum $c^{(i - 1)}$ to scale our previous answer $y^{(i - 1)}$  and add in the new element we just saw in the form of $ e^{s_i} \cdot v_i$. At the end of $N$ iterations, our "estimate" $y^{(N)}$ is the actual $y$ we wanted to calculate. 
 
 Note that we got the output $y = y^{(N)}$ without ever fully materializing the softmax-ed vector $p$ and by only accessing $s$ one element at a time. You might have noticed the resemblance of our toy problem with Equation $1$. To make it more apparent, we could replace $v \in \R^N$ with $V \in \R ^ {N \times d}$ and observe that our update scheme doesn't change much at all -- we just have to apply the update to $d$ entries of the row $V_i$ at a time. This "online" softmax calculation is the bit that lets FlashAttention bring the memory usage down to $\mathcal{O}(N)$ from $\mathcal{O}(N^2)$ because we will never materialize all of $S$ or $P$ in memory and instead work only with "blocks" of those matrices. But more on that later.
 
-In practice, however, instead of Equation $2$, softmax is calculated like this -- 
+In practice, instead of Equation $2$, softmax is calculated like this --
 
 $$ y_i = \frac {e^{x_i - max(x)}} {\sum_{j=1}^N e^{x_j - max(x)}} \tag{3} $$
 
-This is because you wouldn't want your [softmax to overflow](https://jaykmody.com/blog/stable-softmax/){:target="_blank"} now, would you?
+This is because we don't want [softmax to overflow](https://jaykmody.com/blog/stable-softmax/){:target="_blank"}.
 
 {% endkatexmm %}
 --- 
@@ -201,7 +202,7 @@ Figure $1$ is a visual illustration of what the *flash_attn_inner* function is d
 
 <div class='figure'>
     <img src="/assets/fa.gif"
-         style="width: 80%; display: block; margin: 0 auto;"/>
+         style="width: 100%; display: block; margin: 0 auto;"/>
     <div class='caption'>
         <span class='caption-label'>Figure 1.</span> The dashed blocks represent the "active" blocks in each iteration of the for-loop inside flash_attn_inner.
     </div>
@@ -235,12 +236,12 @@ A note on things that are important but didn't get the real estate they deserve 
 **FlashAttention-2** [[paper](https://arxiv.org/abs/2307.08691){:target="_blank"}] further optimizes the original FlashAttention algorithm by -- 
 - reducing non-matmul FLOPs. This is important because GPUs have much lower throughput (~10x) for non-matmul FLOPs than matmul FLOPs.
 - parallelizing across the sequence dimension (we actually covered this with the reversed loop order thingy above).
-- better work partitioning that reduces the need for synchronization and shared memory read/writes.{% sidenote "fa2" "Yeah, this bit is complicated. I don't fully understand it yet. Might make for an interesting post when I do."%}
+- better work partitioning that reduces the need for synchronization and shared memory read/writes.
 
 **Flash-Decoding** [[official post](https://crfm.stanford.edu/2023/10/12/flashdecoding.html){:target="_blank"}] is a specialization of the FlashAttention algorithm to auto-regressive inference, where the query sequence length is 1. We were parallelizing the outer loop across blocks $Q_{B_i}$s, but, for inference, since we will only have a single row in $Q$, we will end up under-utilizing the GPU. FlashDecoding solves this issue by dividing the work along the longer key/value sequence dimensions and followed by a reduce operation to get the final output.
 
 **Non-trivial implementation**. 
-Here is the deal, none of this works unless implemented carefully. Multiple operations need to be fused together to avoid unnecessary kernel launch overheads and reads/writes to HBM. As clean and intuitive as the algorithm itself is, I imagine, writing all that CUDA code to actually get the speedups that the authors did, must have been a lot of work. Impressive really, and we have side stepped all those gory details here. The [triton kernels](https://github.com/openai/triton/blob/main/python/tutorials/06-fused-attention.py){:target="_blank"} do offer a more approachable way to get your hands dirty with the core FlashAttention algorithm than the [CUDA/CUTLASS/C implementation](https://github.com/Dao-AILab/flash-attention/){:target="_blank"}, but, you will lose some of the finer grained control required to implement things like the work partitioning optimization in FlashAttention-2.
+Here is the deal -- none of this works unless implemented carefully. Multiple operations need to be fused together to avoid unnecessary kernel launch overheads and reads/writes to HBM. As clean and intuitive as the algorithm itself is, writing all that CUDA code to actually get the speedups that the authors did must have been a lot of work. We have side stepped all those gory details here. The [triton kernels](https://github.com/openai/triton/blob/main/python/tutorials/06-fused-attention.py){:target="_blank"} do offer a more approachable way to get your hands dirty with the core FlashAttention algorithm than the [CUDA/CUTLASS/C implementation](https://github.com/Dao-AILab/flash-attention/){:target="_blank"}, but you will lose some of the finer grained control required to implement things like the work partitioning optimization in FlashAttention-2.
 
 <br />
 
