@@ -244,9 +244,24 @@ hr {
   /* } */
 /* } */ 
 
-@media screen and (max-width: 700px) {
+/* @media screen and (max-width: 700px) {
   body {
     margin: 0 7px;
+  }
+} */
+
+@media screen and (max-width: 768px) {
+  .wrap {
+    max-width: 95%;
+    padding: 0 5%;
+  }
+
+  .sidenote {
+    float: none;
+    width: 100%;
+    margin-left: 0;
+    margin-top: 20px;
+    font-size: 0.8rem;
   }
 }
 
