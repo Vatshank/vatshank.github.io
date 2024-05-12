@@ -60,7 +60,7 @@ Let’s review the background material real quick.
 
 Given matrices $Q, K, V \in {\R}^{N \times d}$ where $N$ is the sequence length and $d$ is the embedding dimension, self-attention calculates the output $O \in \R ^{N \times d}$ as 
 
-$$ O = softmax (\frac {QK^T} {\sqrt{d}}) V \tag{1} $$
+$$ O = softmax \left( \frac {QK^T} {\sqrt{d}} \right) V \tag{1} $$
 
 where the $softmax$ is applied row-wise. 
 

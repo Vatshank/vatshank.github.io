@@ -1,5 +1,12 @@
 
 /* TODO: add variables for things like font lists that repeat */
+@font-face {
+  font-family: 'ETBookRoman';
+  src: url('../fonts/et-book/et-book-roman-line-figures/et-book-roman-line-figures.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
 html {
   font-family: 'Courier', -apple-system, Helvetica, arial, sans-serif;
   /* font-family: Helvetica; */
@@ -34,8 +41,14 @@ h6 {
   font-family: 'Courier', -apple-system, Helvetica, arial, sans-serif;
 }
 h1 {
-  line-height: 1.2em;
+  line-height: 0.5em;
+  font-size: 55px;
 }
+
+h4 {
+  font-size: 20px;
+}
+
 .clear {
   clear: both;
 }
@@ -43,12 +56,18 @@ h1 {
   display: none;
 }
 .wrap {
-  max-width: 700px;
+  max-width: 850px;
   margin: 0 auto;
 }
 .mono {
   font-family: monospace;
 }
+
+code, pre {
+  font-family: monospace;
+  font-size: 16px; /* Set an appropriate size */
+}
+
 .nav {
   margin-top: 15px;
   margin-bottom: 15px;
@@ -88,17 +107,17 @@ h1 {
   font-family: 'Courier', -apple-system, Helvetica, arial, sans-serif;
 }
 .front-matter .bylines .byline h3 {
-  font-size: 9px;
+  font-size: 12px;
   text-transform: uppercase;
   color: rgba(0, 0, 0, 0.5);
 }
 .front-matter .bylines .byline p {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.6em;
 }
 .article {
-  font-size: 15px; /* TODO: increase font size */
-  line-height: 1.6em;
+  font-size: 17px; /* TODO: increase font size */
+  line-height: 1.5em;
   color: rgba(0, 0, 0, 0.8);
   margin-top: 50px;
   margin-bottom: 50px;
@@ -123,7 +142,7 @@ h1 {
 .article .figure .caption {
   padding-top: 15px;
   display: inline-block;
-  font-size: 13px;
+  font-size: 18px;
   line-height: 1.2em;
 }
 .article .figure .caption-label {
@@ -213,6 +232,17 @@ h1 {
 hr {
   border-top: #ccc;
 }
+
+/* TODO: centre panel adjustment for screen */
+
+
+/* @media screen and (max-width: 900px) {
+  .wrap {
+    max-width: 100%; /* Allows the panel to use the full width of the screen on smaller devices */
+    /* padding: 0 10px; Adds padding to ensure content does not touch the screen edges */
+  /* } */
+/* } */ 
+
 @media screen and (max-width: 700px) {
   body {
     margin: 0 7px;
@@ -233,7 +263,8 @@ hr {
   width: 50%;
   margin-top: 0;
   margin-bottom: 1.96rem;
-  font-size: 0.85rem;
+  /* font-size: 0.85rem; */
+  font-size: 1rem;
   line-height: 1.4;
   vertical-align: baseline;
   position: relative; }
