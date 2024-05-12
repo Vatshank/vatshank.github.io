@@ -254,6 +254,7 @@ hr {
   .wrap {
     max-width: 95%;
     padding: 0 5%;
+    margin-left: 20%;
   }
 
   .sidenote {
