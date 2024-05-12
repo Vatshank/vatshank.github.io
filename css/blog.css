@@ -18,8 +18,7 @@ html {
 }
 body {
   margin: 0;
-  margin-left: -30%;
-  /* margin-right: -30%; */
+  margin-left: -25%;
   counter-reset: sidenote-counter;
   
 }
@@ -56,7 +55,8 @@ h4 {
   display: none;
 }
 .wrap {
-  max-width: 850px;
+  /* max-width: 800px; */
+  max-width: 40%;
   margin: 0 auto;
 }
 .mono {
@@ -65,7 +65,8 @@ h4 {
 
 code, pre {
   font-family: monospace;
-  font-size: 16px; /* Set an appropriate size */
+  font-size: 17px; /* Set an appropriate size */
+  line-height: 1.2em;
 }
 
 .nav {
@@ -107,16 +108,16 @@ code, pre {
   font-family: 'Courier', -apple-system, Helvetica, arial, sans-serif;
 }
 .front-matter .bylines .byline h3 {
-  font-size: 12px;
+  font-size: 14px;
   text-transform: uppercase;
   color: rgba(0, 0, 0, 0.5);
 }
 .front-matter .bylines .byline p {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.6em;
 }
 .article {
-  font-size: 17px; /* TODO: increase font size */
+  font-size: 18px; /* TODO: increase font size */
   line-height: 1.5em;
   color: rgba(0, 0, 0, 0.8);
   margin-top: 50px;
@@ -180,7 +181,7 @@ code, pre {
   margin-bottom: 100px;
 }
 #blog #intro {
-  font-size: 14px;
+  font-size: 16px;
   font-style: italic;
   line-height: 1.4em;
   margin-bottom: 40px;
@@ -194,7 +195,7 @@ code, pre {
 #blog .post-date {
   text-transform: uppercase;
   color: rgba(0, 0, 0, 0.7);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
   margin-top: 4px;
   margin-bottom: 4px;
@@ -205,14 +206,14 @@ code, pre {
   margin-bottom: 0;
 }
 #blog .post-title a {
-  font-size: 18px;
+  font-size: 20px;
   text-decoration: none;
 }
 #blog .post-title a:hover {
   text-decoration: underline;
 }
 #blog .post-subtitle {
-  font-size: 14px;
+  font-size: 16px;
   margin-top: 0;
   margin-bottom: 25px;
   line-height: 1.5em;
@@ -259,7 +260,8 @@ hr {
 
 .sidenote, .marginnote { float: right;
   clear: right;
-  margin-right: -70%;
+  margin-right: -60%;
+  /* margin-left: 10%; */
   width: 50%;
   margin-top: 0;
   margin-bottom: 1.96rem;

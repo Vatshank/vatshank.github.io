@@ -202,7 +202,7 @@ Figure $1$ is a visual illustration of what the *flash_attn_inner* function is d
 
 <div class='figure'>
     <img src="/assets/fa.gif"
-         style="width: 100%; display: block; margin: 0 auto;"/>
+         style="width: 80%; display: block; margin: 0 auto;"/>
     <div class='caption'>
         <span class='caption-label'>Figure 1.</span> The dashed blocks represent the "active" blocks in each iteration of the for-loop inside flash_attn_inner.
     </div>
