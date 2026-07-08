@@ -84,6 +84,7 @@ code, pre {
 pre {
   max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 .article table {
   max-width: 100%;
@@ -268,6 +269,7 @@ pre {
   padding: 1rem 1.2rem;
   margin: 1.5rem 0;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 .article code.highlighter-rouge {
   background: #f7f7f5;
@@ -301,8 +303,12 @@ pre {
   color: inherit;
 }
 .article .katex-display {
+  /* x can scroll for long equations; y must never scroll (KaTeX struts
+     overflow a few px and would otherwise trigger a vertical scrollbar).
+     The padding absorbs those few px so glyphs don't clip. */
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
+  padding: 8px 2px;
   line-height: normal;
 }
 .article .katex {
