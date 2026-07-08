@@ -24,6 +24,16 @@
     <link rel='shortcut icon' href='/favicon.png?v=e' />
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <link href='/css/blog.css' rel='stylesheet'/>
+    <script>
+(function() {
+    try {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    } catch (e) {}
+})();
+</script>
+
 
     <script type='text/x-mathjax-config'>
 MathJax.Hub.Config({
@@ -49,8 +59,43 @@ MathJax.Hub.Config({
         <li><a href='/'>Home</a></li>
         <!-- <li><a href='/blog'>Blog</a></li> -->
         <li><a href='/feed.xml'>RSS</a></li>
+        <li class='nav-theme'><button id='theme-toggle' aria-label='Toggle dark mode'></button></li>
     </ul>
 </div>
+<script>
+(function() {
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    /* Minimal owl-head silhouette: round head, short tufts, big eyes, small beak. */
+    var owlAwake = '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+        + '<path d="M5 1.5 9.2 4.2 5.6 6.9z"/>'
+        + '<path d="M19 1.5 14.8 4.2 18.4 6.9z"/>'
+        + '<path fill-rule="evenodd" d="M3 13a9 9 0 1 0 18 0 9 9 0 1 0-18 0z'
+        + 'M5.6 11.8a2.7 2.7 0 1 0 5.4 0 2.7 2.7 0 1 0-5.4 0z'
+        + 'M13 11.8a2.7 2.7 0 1 0 5.4 0 2.7 2.7 0 1 0-5.4 0z'
+        + 'M12 15.2 13.3 16.8 12 19 10.7 16.8z"/>'
+        + '</svg>';
+    var owlAsleep = '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+        + '<path d="M5 1.5 9.2 4.2 5.6 6.9z"/>'
+        + '<path d="M19 1.5 14.8 4.2 18.4 6.9z"/>'
+        + '<path fill-rule="evenodd" d="M3 13a9 9 0 1 0 18 0 9 9 0 1 0-18 0z'
+        + 'M6.8 11h3a.8.8 0 0 1 0 1.6h-3a.8.8 0 0 1 0-1.6z'
+        + 'M14.2 11h3a.8.8 0 0 1 0 1.6h-3a.8.8 0 0 1 0-1.6z'
+        + 'M12 15.2 13.3 16.8 12 19 10.7 16.8z"/>'
+        + '</svg>';
+    function setGlyph() {
+        /* owls are nocturnal: wide awake in dark mode, dozing in the day */
+        btn.innerHTML = document.documentElement.classList.contains('dark') ? owlAwake : owlAsleep;
+    }
+    btn.addEventListener('click', function() {
+        var dark = document.documentElement.classList.toggle('dark');
+        try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+        setGlyph();
+    });
+    setGlyph();
+})();
+</script>
+
     <div class="quote-float" id="rotating-quote" style="transition: opacity 0.5s ease;"></div>
     
     <script>

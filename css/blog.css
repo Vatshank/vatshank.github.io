@@ -96,6 +96,18 @@ pre {
   margin-top: 15px;
   margin-bottom: 15px;
 }
+#theme-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 1;
+  vertical-align: -6px;
+  color: rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+#theme-toggle:hover {
+  color: rgba(0, 0, 0, 0.9);
+}
 .nav a {
   color: rgba(0, 0, 0, 0.6);
   text-decoration: none;
@@ -327,6 +339,14 @@ pre {
 li .sidenote, li .marginnote { margin-right: calc(-1 * var(--sidenote-width) - var(--sidenote-gap) - 15px); }
 
 blockquote .sidenote, blockquote .marginnote { margin-right: calc(-1 * var(--sidenote-width) - var(--sidenote-gap) - 1em); }
+
+/* checkbox that drives the small-screen toggle; never visible itself */
+input.margin-toggle {
+  display: none;
+}
+label.margin-toggle {
+  cursor: pointer;
+}
 
 .sidenote-number { counter-increment: sidenote-counter; }
 
@@ -569,9 +589,31 @@ hr {
   }
 }
 
-@media screen and (max-width: 900px) {
+/* Margin notes need article-width + 2*(sidenote-width + gap) = 1460px of
+   viewport; below that they'd clip at the right edge. Collapse them behind
+   their number and let a tap on the superscript toggle the note inline
+   (Tufte-style). */
+@media screen and (max-width: 1460px) {
   .sidenote, .marginnote {
     display: none;
+  }
+  .margin-toggle:checked + .sidenote,
+  .margin-toggle:checked + .marginnote {
+    display: block;
+    float: none;
+    clear: both;
+    width: 95%;
+    margin: 1rem 2.5%;
+    font-size: 0.9rem;
+    color: rgba(0, 0, 0, 0.6);
+  }
+  html.dark .margin-toggle:checked + .sidenote,
+  html.dark .margin-toggle:checked + .marginnote {
+    color: rgba(255, 255, 255, 0.65);
+  }
+  label.sidenote-number {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
   }
 }
 
@@ -592,4 +634,156 @@ hr {
     line-height: 1.1em;
     font-size: 40px;
   }
+}
+
+/* --- Dark mode --- */
+html.dark {
+  background: #191817;
+  color-scheme: dark;
+}
+html.dark body {
+  background: #191817;
+}
+html.dark html,
+html.dark {
+  color: rgba(255, 255, 255, 0.82);
+}
+html.dark body,
+html.dark .article,
+html.dark #blog #intro {
+  color: rgba(255, 255, 255, 0.82);
+}
+html.dark a {
+  color: rgba(255, 255, 255, 0.82);
+}
+html.dark .nav a {
+  color: rgba(255, 255, 255, 0.6);
+}
+html.dark #theme-toggle {
+  color: rgba(255, 255, 255, 0.6);
+}
+html.dark #theme-toggle:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+html.dark .front-matter {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+html.dark .front-matter .bylines .byline h3 {
+  color: rgba(255, 255, 255, 0.5);
+}
+html.dark .article h2 {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+html.dark .article .figure {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+html.dark .article hr {
+  border-top-color: rgba(255, 255, 255, 0.6);
+}
+html.dark .article blockquote {
+  color: #aaa;
+  border-left-color: #444;
+}
+html.dark .left-toc {
+  color: rgba(255, 255, 255, 0.5);
+}
+html.dark .left-toc a {
+  color: rgba(255, 255, 255, 0.4);
+}
+html.dark .left-toc a:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+html.dark .left-toc a.is-active {
+  color: rgba(255, 255, 255, 0.9);
+}
+html.dark .quote-float p {
+  color: rgba(255, 255, 255, 0.5);
+}
+html.dark .quote-float .quote-author {
+  color: rgba(255, 255, 255, 0.4);
+}
+html.dark .sidenote, html.dark .marginnote {
+  color: rgba(255, 255, 255, 0.75);
+}
+html.dark #blog .post-date {
+  color: rgba(255, 255, 255, 0.7);
+}
+html.dark #blog .year {
+  color: rgba(255, 255, 255, 0.5);
+}
+html.dark #blog #intro,
+html.dark #blog #publications,
+html.dark #pinned-section {
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+html.dark #blog #publications h3,
+html.dark #pinned-section h3,
+html.dark #blog #posts h3 {
+  color: rgba(255, 255, 255, 0.5);
+}
+html.dark #blog #publications .pub-authors {
+  color: rgba(255, 255, 255, 0.5);
+}
+html.dark #blog #publications .pub-links a {
+  color: #8ab4f8;
+}
+html.dark #pinned-section .pinned-post {
+  background: #211f1e;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+html.dark #pinned-section .pinned-post .post-subtitle,
+html.dark #pinned-section .pinned-post .pinned-recent li,
+html.dark #pinned-section .pinned-post .pinned-recent a {
+  color: rgba(255, 255, 255, 0.55);
+}
+html.dark #bibliography {
+  border-top-color: rgba(255, 255, 255, 0.15);
+}
+html.dark #bibliography ol.bibliography {
+  color: rgba(255, 255, 255, 0.5);
+}
+/* inline code + code blocks (warm earth, dark variant) */
+html.dark .article code {
+  color: #6fd3bd;
+}
+html.dark .article code.highlighter-rouge {
+  background: #26241f;
+  border-color: #3a3731;
+}
+html.dark .article div.highlighter-rouge {
+  background: #201e1a;
+  border-color: #35322c;
+}
+/* trac.css (warm earth) dark overrides */
+html.dark .highlight { background: #201e1a; color: #d6cfc4; }
+html.dark .highlight .hll { background-color: #2c2925 }
+html.dark .highlight .c, html.dark .highlight .ch, html.dark .highlight .cm,
+html.dark .highlight .cpf, html.dark .highlight .c1, html.dark .highlight .cs,
+html.dark .highlight .go, html.dark .highlight .gp { color: #7d766b }
+html.dark .highlight .k, html.dark .highlight .kc, html.dark .highlight .kd,
+html.dark .highlight .kn, html.dark .highlight .kp, html.dark .highlight .kr,
+html.dark .highlight .kt, html.dark .highlight .ow, html.dark .highlight .cp,
+html.dark .highlight .nt { color: #d1a075 }
+html.dark .highlight .s, html.dark .highlight .sa, html.dark .highlight .sb,
+html.dark .highlight .sc, html.dark .highlight .dl, html.dark .highlight .sd,
+html.dark .highlight .s2, html.dark .highlight .sh, html.dark .highlight .si,
+html.dark .highlight .sx, html.dark .highlight .s1 { color: #c9a227 }
+html.dark .highlight .m, html.dark .highlight .mb, html.dark .highlight .mf,
+html.dark .highlight .mh, html.dark .highlight .mi, html.dark .highlight .mo,
+html.dark .highlight .il, html.dark .highlight .no, html.dark .highlight .se,
+html.dark .highlight .ss { color: #a3be5f }
+html.dark .highlight .nf, html.dark .highlight .fm, html.dark .highlight .nc,
+html.dark .highlight .ne, html.dark .highlight .na, html.dark .highlight .gh,
+html.dark .highlight .gu, html.dark .highlight .sr { color: #7fc8a9 }
+html.dark .highlight .err, html.dark .highlight .o, html.dark .highlight .nb,
+html.dark .highlight .ni, html.dark .highlight .nn, html.dark .highlight .nv,
+html.dark .highlight .w, html.dark .highlight .bp, html.dark .highlight .vc,
+html.dark .highlight .vg, html.dark .highlight .vi, html.dark .highlight .vm,
+html.dark .highlight .p { color: #d6cfc4 }
+/* markdown.css bleed-through */
+html.dark .markdown-body { color: rgba(255, 255, 255, 0.82); }
+/* KaTeX renders with currentColor, inherits fine */
+html.dark .sidenote-number:after,
+html.dark .sidenote:before {
+  color: #e0806f;
 }
