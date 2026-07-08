@@ -549,17 +549,25 @@ hr {
   .left-toc {
     display: none;
   }
+  /* Drop the grid: a 1fr track's min size is min-content, so wide code
+     lines/equations blow the track out past the viewport and the prose
+     stops wrapping. A plain centered block wraps like the home page. */
   .post-content-shell {
-    grid-template-columns: 1fr;
-  }
-  .post-content-shell > .article {
-    grid-column: 1;
-    max-width: 100%;
-    width: 100%;
+    display: block;
+    max-width: var(--article-width);
     margin: 0 auto;
     padding: 0 16px;
     box-sizing: border-box;
   }
+  .post-content-shell > .article {
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+  }
+}
+
+@media screen and (max-width: 900px) {
   .sidenote, .marginnote {
     display: none;
   }
@@ -574,5 +582,12 @@ hr {
   .article img {
     max-width: 100%;
     height: auto;
+  }
+  /* On desktop the title is one line, so line-height:0.5em just tightens
+     it; when it wraps on a narrow screen the lines overlap. Restore normal
+     leading and cap the size so long titles stay readable. */
+  h1 {
+    line-height: 1.1em;
+    font-size: 40px;
   }
 }
