@@ -23,10 +23,12 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
+html, body {
+  overflow-x: hidden;
+}
 body {
   margin: 0;
   counter-reset: sidenote-counter;
-  overflow-x: hidden;
 }
 body .content {
   margin-bottom: 120px;
@@ -545,16 +547,32 @@ hr {
     max-width: var(--article-width);
     margin: 0 auto;
   }
+  .sidenote, .marginnote {
+    float: none;
+    clear: both;
+    width: 100%;
+    margin: 20px 0;
+    font-size: 0.85rem;
+  }
 }
 
 @media screen and (max-width: 768px) {
   .wrap {
-    max-width: 95%;
-    padding: 0 5%;
+    max-width: 100%;
+    padding: 0 16px;
+    box-sizing: border-box;
   }
   .post-content-shell > .article {
-    max-width: 95%;
-    padding: 0 5%;
+    max-width: 100%;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+  .article div.highlighter-rouge {
+    overflow-x: auto;
+  }
+  .article img {
+    max-width: 100%;
+    height: auto;
   }
   .sidenote, .marginnote {
     float: none;
