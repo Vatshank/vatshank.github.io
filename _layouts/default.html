@@ -8,6 +8,8 @@
     <meta name='keywords' content='{{ page.keywords }}'>
     <meta name='author' content='Vatshank Chaturvedi'>
 
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
     <link href='/css/blog.css' rel='stylesheet'/>
     <link href='/css/trac.css' rel='stylesheet'/>
     <link href='/css/markdown.css' rel='stylesheet'/>
@@ -23,15 +25,18 @@
             <h4>{{ page.subtitle }}</h4>
             <div class='bylines'>
                 <div class='byline'>
-                    <h3>Published</h3>
                     <p>{{ page.date |  date: '%d %B %Y' }}</p>
                 </div>
             </div>
             <div class='clear'></div>
         </div>
     </div>
-    <div class='wrap article'>
-        {{ content }}
+    <div class='post-content-shell'>
+        <nav id='left-toc' class='left-toc' aria-label='Table of contents'>
+        </nav>
+        <div class='wrap article'>
+            {{ content }}
+        </div>
     </div>
     <div id='bibliography'>
         <div class='wrap'>
@@ -39,5 +44,64 @@
         </div>
     </div>
 </div>
+<script>
+(function() {
+    var toc = document.getElementById('left-toc');
+    var article = document.querySelector('.article');
+    if (!toc || !article) return;
+
+    var headings = article.querySelectorAll('h2, h3');
+    if (headings.length === 0) return;
+
+    var ul = document.createElement('ul');
+    var currentH2Li = null;
+    var currentSubUl = null;
+
+    headings.forEach(function(h) {
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        li.appendChild(a);
+
+        if (h.tagName === 'H2') {
+            currentH2Li = li;
+            currentSubUl = null;
+            ul.appendChild(li);
+        } else {
+            if (!currentSubUl) {
+                currentSubUl = document.createElement('ul');
+                if (currentH2Li) {
+                    currentH2Li.appendChild(currentSubUl);
+                } else {
+                    ul.appendChild(li);
+                    return;
+                }
+            }
+            currentSubUl.appendChild(li);
+        }
+    });
+
+    toc.appendChild(ul);
+
+    var tocLinks = toc.querySelectorAll('a');
+    var observerCallback = function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                tocLinks.forEach(function(link) { link.classList.remove('is-active'); });
+                var active = toc.querySelector('a[href="#' + entry.target.id + '"]');
+                if (active) active.classList.add('is-active');
+            }
+        });
+    };
+
+    var observer = new IntersectionObserver(observerCallback, {
+        rootMargin: '-80px 0px -70% 0px',
+        threshold: 0
+    });
+
+    headings.forEach(function(h) { observer.observe(h); });
+})();
+</script>
 </body>
 </html>

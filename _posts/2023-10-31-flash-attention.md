@@ -126,14 +126,7 @@ This is because we don't want [softmax to overflow](https://jaykmody.com/blog/st
 --- 
 
 ### GPU Stuff
-Kind of obvious when it’s spelled out but something I learnt way later than I am willing to admit is --
-<!-- TODO:  do in excalidraw?  -->
-
-
-```
-time-taken-to-do-a-thing-on-a-computer = time-spent-on-data-movement + time-spent-on-actual-compute
-```
-
+Kind of obvious when it’s spelled out but something I learnt way later than I am willing to admit is -- *time taken to do a thing on a computer = (time spent on data movement) + (time spent on actual compute)*.
 
 Time spent on data movement includes things like moving your input data from the main memory to the compute unit, saving/loading any intermediate results, and writing your final output back to the main memory.
 
@@ -160,7 +153,7 @@ Here is the core idea -- see how that output $O$ is $\R^{N \times d}$ but the in
 Let's make a couple of simplifications before we look at the python-esque pseudo code for the forward pass -- we will assume similar row and column block sizes, and also ignore the softmax overflow correction for now.{% sidenote "overflow" "While it is absolutely necessary to do the correction in practice, it does make the pseudocode a tad bit annoying thanks to the additional bookkeeping needed for the max value correction. I have shoved the version with the overflow correction in the [appendix](#appendix) for the more tranquil-minded." %}
 
 Let $B$ be the block size and $n_B = N / B$ be the number of blocks. For $i \in \{1, 2, ... n_B\}$, we will use $B_i$ to denote the $i$-th block, for example, $Q_{B_i}$ would be the $B \times d$ matrix with contiguous rows $Q_{iB}$ ... $Q_{(i + 1)B - 1}$.
-*flash_attn* is the function that is responsible for calculating the output $O$ given input matrices $Q$, $K$, $V$ and block-size $B$. It breaks down the problem by partitioning $Q$ into blocks of $Q_{B_i}$s such that the output $O_{B_{i}}$ corresponding to a $Q_{B_{i}}$ is calculated by *flash_attn_inner*.
+`flash_attn` is the function that is responsible for calculating the output $O$ given input matrices $Q$, $K$, $V$ and block-size $B$. It breaks down the problem by partitioning $Q$ into blocks of $Q_{B_i}$s such that the output $O_{B_{i}}$ corresponding to a $Q_{B_{i}}$ is calculated by `flash_attn_inner`.
 
 
 Here we go{% sidenote "loop" "The order of inner and outer loops here is reversed from that of the algorithm in the [paper](https://arxiv.org/abs/2205.14135){:target="_blank"}. What we have here is similar to [FlashAttention-2](https://arxiv.org/abs/2307.08691){:target="_blank"} and was originally implemented in the [Triton kernel](https://github.com/Dao-AILab/flash-attention/blob/main/flash_attn/flash_attn_triton_og.py){:target="_blank"}. This lends itself to easy parallelization of the outer loop over the $Q_{B_i}$s." %} -- 
@@ -198,13 +191,13 @@ def online_softmax(O_Bi, S_ij, V_Bj, running_sum):
 
 Attentive{% sidenote "zinger" "Sorry, gotta get the bad jokes out while I still can. This first blog post has been six years in waiting, there might not be another one." %} readers would have noted that the output row $O_i$ depends on $Q$ only through $Q_i$. So we can calculate $O_{B_i}$ just by looking at the corresponding chunk of $Q_{B_i}$ and thus the outer loop over the $Q_{B_i}$s can be parallelized. 
 
-Figure $1$ is a visual illustration of what the *flash_attn_inner* function is doing. Following the notation in the paper, $L$ and $M$ are used to represent the online statistics for the softmax calculation. $L$ is similar to *running_sum*, while $M$ keeps track of the max values for overflow correction (which we have omitted in our pseudocode). 
+Figure $1$ is a visual illustration of what the `flash_attn_inner` function is doing. Following the notation in the paper, $L$ and $M$ are used to represent the online statistics for the softmax calculation. $L$ is similar to `running_sum`, while $M$ keeps track of the max values for overflow correction (which we have omitted in our pseudocode). 
 
 <div class='figure'>
     <img src="/assets/fa.gif"
          style="width: 80%; display: block; margin: 0 auto;"/>
     <div class='caption'>
-        <span class='caption-label'>Figure 1.</span> The dashed blocks represent the "active" blocks in each iteration of the for-loop inside flash_attn_inner.
+        <span class='caption-label'>Figure 1.</span> The dashed blocks represent the "active" blocks in each iteration of the for-loop inside <code>flash_attn_inner</code>.
     </div>
 </div>
 
@@ -213,9 +206,9 @@ Let's count the number of times we access the HBM to convince ourselves that the
 
 - *Good ol' Attention* -- Loading in $Q$, $K$, $V$ takes $\mathcal{O}(Nd)$ reads, reading/writing $S$ and $P$ takes $\mathcal{O}(N^2)$ accesses, and writing out $O$ is another $\mathcal{O}(Nd)$ accesses. In total, that's $\mathcal{O}(Nd + N^2)$ HBM accesses.
 
-- *FlashAttention* --  The total number of HBM accesses is $n_B$ times the number of HBM accesses per call to *flash_attn_inner*. Each *flash_attn_inner* call takes $\mathcal{O}(Nd)$ reads for loading $K$ and $V$. Reading $Q_{B_i}$ and writing $O_{B_i}$ mean additional $\mathcal{O}(NB)$ accesses. That adds up to $\mathcal{O}(Nd)$ per call. Assuming SRAM size of $M$, we want to choose a big enough block-size $B$ such that $M = Bd$ and $n_B = N / B = Nd/M$. This gives us a grand total of $\mathcal{O}(N^2d^2/M)$ HBM accesses.
+- *FlashAttention* --  The total number of HBM accesses is $n_B$ times the number of HBM accesses per call to `flash_attn_inner`. Each `flash_attn_inner` call takes $\mathcal{O}(Nd)$ reads for loading $K$ and $V$. Reading $Q_{B_i}$ and writing $O_{B_i}$ mean additional $\mathcal{O}(NB)$ accesses. That adds up to $\mathcal{O}(Nd)$ per call. Assuming SRAM size of $M$, we want to choose a big enough block-size $B$ such that $M = Bd$ and $n_B = N / B = Nd/M$. This gives us a grand total of $\mathcal{O}(N^2d^2/M)$ HBM accesses.
 
-Typically, $d \approx 100$ and $M \approx 100kB$ making $d^2 < M$, and thus FlashAttention has fewer HBM accesses than vanilla self-attention, which makes it faster. Also, the memory requirement is reduced to $\mathcal{O}(N)$ because all we need to save to the HBM are the statistics (*running_sum* above) required to calculate the online softmax (in addition to our inputs and output, of course), whereas vanilla self-attention would have us store the entire $\R^{N \times N}$ attention matrix.
+Typically, $d \approx 100$ and $M \approx 100kB$ making $d^2 < M$, and thus FlashAttention has fewer HBM accesses than vanilla self-attention, which makes it faster. Also, the memory requirement is reduced to $\mathcal{O}(N)$ because all we need to save to the HBM are the statistics (`running_sum` above) required to calculate the online softmax (in addition to our inputs and output, of course), whereas vanilla self-attention would have us store the entire $\R^{N \times N}$ attention matrix.
 
 <br />
 
