@@ -33,7 +33,9 @@ body {
 body .content {
   margin-bottom: 120px;
   max-width: 100vw;
-  overflow-x: hidden;
+  /* clip (not hidden): hidden creates a scroll container, which breaks
+     position:sticky on the left ToC */
+  overflow-x: clip;
 }
 a {
   color: rgba(0, 0, 0, 0.8);
@@ -147,7 +149,7 @@ pre {
   align-items: start;
   margin-top: 0;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .post-content-shell > .article {
