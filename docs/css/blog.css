@@ -43,6 +43,12 @@ a {
 a:hover {
   text-decoration: none;
 }
+/* Content/prose links get a muted blue so they read as links.
+   Nav, ToC, and bold titles keep their own colors. */
+.article a,
+#blog #intro a {
+  color: #1a5fb4;
+}
 h1,
 h2,
 h3,
@@ -320,6 +326,10 @@ pre {
 .article ul {
   padding: 0 15px;
 }
+/* nested ordered lists use letters (1 → a, b) instead of numbers (1 → 1, 2) */
+.article ol ol {
+  list-style-type: lower-alpha;
+}
 .article hr {
   border-bottom: none;
   border-top: 1px solid rgba(0, 0, 0, 0.7);
@@ -452,7 +462,7 @@ label.margin-toggle {
 }
 #blog #publications .pub-links a {
   text-decoration: none;
-  color: #1a0dab;
+  color: #1a5fb4;
 }
 #blog #publications .pub-links a:hover {
   text-decoration: underline;
@@ -661,6 +671,10 @@ html.dark #blog #intro {
 }
 html.dark a {
   color: rgba(255, 255, 255, 0.82);
+}
+html.dark .article a,
+html.dark #blog #intro a {
+  color: #8ab4f8;
 }
 html.dark .nav a {
   color: rgba(255, 255, 255, 0.6);

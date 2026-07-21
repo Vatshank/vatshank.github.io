@@ -84,7 +84,7 @@ title: blog
         <div id='intro'>
             <p> Hi. I am Vatshank. I <a href="https://www.linkedin.com/in/vatshank/">work</a> in Machine Learning.</p>
 
-            <p> And this is an attempt at a technical blog. There is a grand total of one post right now. We'll see how it goes. </p>
+            <p> And this is an attempt at a technical blog. <del>There is a grand total of one post right now. We'll see how it goes.</del></p>
         </div>
         <div id='publications'>
             <h3>Publications</h3>
@@ -97,21 +97,18 @@ title: blog
                 <p class='pub-authors'>Rohun Kshirsagar, Li-Yen Hsu, Vatshank Chaturvedi, et al. AAAI 2021. <span class='pub-links'>[<a href="https://arxiv.org/abs/2009.10990">arxiv</a>]</span></p>
             </div>
         </div>
-        <!-- <div id='pinned-section'>
+        <div id='pinned-section'>
             <h3>Notes</h3>
             <div class='pinned-post'>
-                <p class='post-title'><a href='/ml-notes'>ML Notes</a></p>
+                <p class='post-title'><a href='/ml-notes'>Machine Learning</a></p>
                 <ul class='pinned-recent'>
-                    {% for note in site.ml_notes %}
+                    {% assign notes = site.ml_notes | where_exp: "n", "n.published != false" | sort: "date" | reverse %}
+                    {% for note in notes %}
                     <li><a href="/ml-notes#{{ note.title | slugify }}">{{ note.title }}</a></li>
                     {% endfor %}
                 </ul>
             </div>
-            <div class='pinned-post'>
-                <p class='post-title'><a href='#'>GPU Notes</a></p>
-                <p class='post-subtitle'>Notes on CUDA programming and GPU kernels.</p>
-            </div>
-        </div> -->
+        </div>
         <div id='posts' class='section'>
             <h3>Posts</h3>
             {% for post in site.posts %}
@@ -136,5 +133,6 @@ title: blog
             {% endfor %}
         </div>
     </div>
+    {% include external-links.html %}
 </body>
 </html>

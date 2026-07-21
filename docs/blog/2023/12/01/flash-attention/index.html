@@ -453,5 +453,27 @@ Here is the deal – none of this works unless implemented carefully. Multiple o
     headings.forEach(function(h) { observer.observe(h); });
 })();
 </script>
+<script>
+(function() {
+    function markExternal() {
+        var links = document.querySelectorAll('a[href]');
+        for (var i = 0; i < links.length; i++) {
+            var a = links[i];
+            // a.host/a.protocol resolve relative URLs; open in a new tab only
+            // for http(s) links pointing to a different host (arxiv, github, youtube, etc.)
+            if (/^https?:$/i.test(a.protocol) && a.host && a.host !== window.location.host) {
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+            }
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', markExternal);
+    } else {
+        markExternal();
+    }
+})();
+</script>
+
 </body>
 </html>

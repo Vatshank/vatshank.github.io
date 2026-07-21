@@ -146,7 +146,7 @@ MathJax.Hub.Config({
         <div id='intro'>
             <p> Hi. I am Vatshank. I <a href="https://www.linkedin.com/in/vatshank/">work</a> in Machine Learning.</p>
 
-            <p> And this is an attempt at a technical blog. There is a grand total of one post right now. We'll see how it goes. </p>
+            <p> And this is an attempt at a technical blog. <del>There is a grand total of one post right now. We'll see how it goes.</del></p>
         </div>
         <div id='publications'>
             <h3>Publications</h3>
@@ -159,19 +159,20 @@ MathJax.Hub.Config({
                 <p class='pub-authors'>Rohun Kshirsagar, Li-Yen Hsu, Vatshank Chaturvedi, et al. AAAI 2021. <span class='pub-links'>[<a href="https://arxiv.org/abs/2009.10990">arxiv</a>]</span></p>
             </div>
         </div>
-        <!-- <div id='pinned-section'>
+        <div id='pinned-section'>
             <h3>Notes</h3>
             <div class='pinned-post'>
-                <p class='post-title'><a href='/ml-notes'>ML Notes</a></p>
+                <p class='post-title'><a href='/ml-notes'>Machine Learning</a></p>
                 <ul class='pinned-recent'>
+                    
+                    
+                    <li><a href="/ml-notes#the-hitchhiker-s-guide-to-frontier-reinforcement-learning-rishabh-agarwal">The Hitchhiker's Guide to Frontier Reinforcement Learning (Rishabh Agarwal)</a></li>
+                    
+                    <li><a href="/ml-notes#chinchilla-scaling-laws-hoffman-et-al-2022">Chinchilla Scaling Laws (Hoffman et al. 2022)</a></li>
                     
                 </ul>
             </div>
-            <div class='pinned-post'>
-                <p class='post-title'><a href='#'>GPU Notes</a></p>
-                <p class='post-subtitle'>Notes on CUDA programming and GPU kernels.</p>
-            </div>
-        </div> -->
+        </div>
         <div id='posts' class='section'>
             <h3>Posts</h3>
             
@@ -196,5 +197,27 @@ MathJax.Hub.Config({
             
         </div>
     </div>
+    <script>
+(function() {
+    function markExternal() {
+        var links = document.querySelectorAll('a[href]');
+        for (var i = 0; i < links.length; i++) {
+            var a = links[i];
+            // a.host/a.protocol resolve relative URLs; open in a new tab only
+            // for http(s) links pointing to a different host (arxiv, github, youtube, etc.)
+            if (/^https?:$/i.test(a.protocol) && a.host && a.host !== window.location.host) {
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+            }
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', markExternal);
+    } else {
+        markExternal();
+    }
+})();
+</script>
+
 </body>
 </html>

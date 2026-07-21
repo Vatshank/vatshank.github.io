@@ -1,0 +1,22 @@
+---
+title: Machine Learning
+subtitle: Short notes on ML papers, blogs, lectures etc.
+layout: default
+keywords: machine learning, notes, papers
+---
+
+<style>
+  /* Notes lean on nested lists and equations rather than margin notes,
+     so give this page a wider column than the default posts. */
+  :root { --article-width: 900px; }
+</style>
+
+{% assign notes = site.ml_notes | where_exp: "n", "n.published != false" | sort: "date" | reverse %}
+{% for note in notes %}
+<h2 id="{{ note.title | slugify }}">{{ note.title }}</h2>
+{% if note.source %}<p class="note-source">Source: <a href="{{ note.source }}">{{ note.source_label | default: note.source }}</a></p>{% endif %}
+{% katexmm %}
+{{ note.content }}
+{% endkatexmm %}
+{% unless forloop.last %}<hr>{% endunless %}
+{% endfor %}
